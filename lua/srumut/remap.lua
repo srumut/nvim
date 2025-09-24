@@ -28,5 +28,9 @@ vim.keymap.set("n", "N", "Nzzzv")
 -- available paste
 vim.keymap.set("x", "<leader>p", "\"_dP")
 
--- leader + y will yank/copy into the system clipboard
+-- leader+y and Ctrl+C will yank/copy into the system clipboard
 vim.keymap.set("v", "<leader>y", "\"+y")
+vim.keymap.set("v", "<C-c>", "\"+y")
+
+-- Ctrl+V will paste into nvim from system clipboard
+vim.keymap.set({"n", "v"}, "<C-v>", "\"+p")
