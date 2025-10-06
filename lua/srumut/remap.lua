@@ -5,8 +5,8 @@
 vim.keymap.set("n", "<leader>pv", vim.cmd.Ex)
 
 -- when Ctrl+d or Ctrl+u is pressed also run zz (center the cursor)
-vim.keymap.set("n", "<C-j>", "<C-d>zz")
-vim.keymap.set("n", "<C-k>", "<C-u>zz")
+vim.keymap.set({"n", "v"}, "<C-j>", "<C-d>zz")
+vim.keymap.set({"n", "v"}, "<C-k>", "<C-u>zz")
 
 -- in visual mode you can move the selected lines up with J, down with K
 vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv")
