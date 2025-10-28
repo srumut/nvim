@@ -138,11 +138,11 @@ vim.keymap.set("v", "<C-c>", "\"+y")
 vim.keymap.set({"n", "v"}, "<C-v>", "\"+p")
 
 -- reload neovim config
-if vim.fn.has(win32) then
-    local config_path = vim.fn.expand("~\\AppData\\Local\\mynvsetup\\init.lua")
+if vim.fn.has("win32") == 1 then
+    local config_path = vim.fn.expand("~\\AppData\\Local\\nvim\\init.lua")
     vim.keymap.set("n", "<leader>r", string.format(":source %s <CR>", config_path))
-elseif vim.fn.has(macunix) then
-    local config_path = vim.fn.expand("$XDG_CONFIG_HOME/mynvsetup/init.lua")
+elseif vim.fn.has("macunix") == 1 then
+    local config_path = vim.fn.expand("$XDG_CONFIG_HOME/nvim/init.lua")
     vim.keymap.set("n", "<leader>r", string.format(":source %s <CR>", config_path))
 else
     print("Because OS is not recognized <leader> + r keybinding could not be set")
@@ -172,9 +172,9 @@ vim.keymap.set("n", "<C-n>", ":cnext<CR>") -- jump to next quickfix list item
 vim.keymap.set("n", "<C-p>", ":cprev<CR>") -- jump to previous quickfix list item
 
 -- IMPORTANT(umut): in order this to work you need command 'tee' on your PATH
-if vim.fn.has(win32) then
+if vim.fn.has("win32") == 1 then
     vim.opt.makeprg = ".\\shell.bat && .\\build.bat"
-elseif vim.fn.has(macunix) then
+elseif vim.fn.has("macunix") == 1 then
     vim.opt.makeprg = "./build.sh"
 end
 
