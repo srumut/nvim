@@ -184,6 +184,14 @@ vim.opt.errorformat = {
     "%-G%.%#" -- Ignore line
 }
 
+-- wrap the text inside of quickfix list
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = "qf",
+  callback = function()
+    vim.opt_local.wrap = true
+  end,
+})
+
 --- COLORSCHEME ---
 local set_color = vim.api.nvim_set_hl
 set_color(0, "Normal", {bg = "#0D1F22", fg="#dddddd"})
