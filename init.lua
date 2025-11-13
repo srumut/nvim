@@ -179,7 +179,7 @@ elseif vim.fn.has("macunix") == 1 then
 end
 
 vim.opt.errorformat = {
-    "%f(%l):\\ %m", -- MSVC
+    "%f(%l)%\\s%\\=:\\ %m", -- MSVC
     "%\\%.%f:%l:%c:\\ %m", -- Clang
     "%-G%.%#" -- Ignore line
 }
@@ -193,18 +193,54 @@ vim.api.nvim_create_autocmd("FileType", {
 })
 
 --- COLORSCHEME ---
+local colors = {
+    background = "#191919",
+    default = "#dcdddc",
+    comment = "#9e9e9e",
+    string = "#8fb76c",
+    statement = "#e5d34b",
+    type =  "#808585",
+    cursor = "#fddd34",
+    error_msg = "#963e47",
+    warning_msg = "#a98049",
+    preproc = "#808585",
+    visual = "#393939",
+    constant = "#cdad14"
+}
+
+vim.opt.guicursor = "n-v-c:block-Cursor,i-ci:ver25-Cursor" -- so that cursor color works properly
+
 local set_color = vim.api.nvim_set_hl
-set_color(0, "Normal", {bg = "#0D1F22", fg="#dddddd"})
-set_color(0, "Visual", {fg = "#eeeeee", bg="#224422"})
-set_color(0, "Comment", {fg="#6D696A"})
-set_color(0, "String", {fg="#B2B7B5"})
-set_color(0, "Function", {fg="#188066"})
-set_color(0, "Constant", {fg="#20aa87"})
-set_color(0, "Type", {fg="#28d4a9"})
-set_color(0, "Statement", {fg="#bbddbb"})
+set_color(0, "Normal", {bg = colors.background, fg = colors.default})
+set_color(0, "Visual", {bg = colors.visual})
+set_color(0, "Comment", {fg = colors.comment})
+set_color(0, "String", {fg = colors.string})
+set_color(0, "Identifier", {fg = colors.default}) -- any variable name
+set_color(0, "Function", {fg = colors.default})
+set_color(0, "Constant", {fg = colors.constant})
+set_color(0, "Statement", {fg = colors.statement})
 set_color(0, "CurSearch", {fg="#bbddbb"}) -- Current match for the search pattern
 set_color(0, "IncSearch", {fg="#bbddbb"})
 set_color(0, "Substitute", {fg="#bbddbb"})
+set_color(0, "Cursor", {bg = colors.cursor, fg = colors.background})
+set_color(0, "ErrorMsg", {fg = colors.error_msg})
+set_color(0, "WarningMsg", {fg = colors.warning_msg})
+set_color(0, "PreProc", {fg = colors.preproc}) -- Preprocessor
+set_color(0, "Type", {fg = colors.type})
+set_color(0, "StorageClass", {fg = colors.type})
+set_color(0, "Structure", {fg = colors.type})
+set_color(0, "Typedef", {fg = colors.type})
+set_color(0, "Special", {fg = colors.default})
+
+set_color(0, "Todo", {fg="#cc2222", bold=true, underline=true}) 
+
+vim.api.nvim_create_namespace("note")
+vim.fn.matchadd("note", "NOTE")
+set_color(0, "note", {fg="#22cc22", bold=true, underline=true})
+
+vim.api.nvim_create_namespace("important")
+vim.fn.matchadd("important", "IMPORTANT")
+set_color(0, "important", {fg="#cccc22", bold=true, underline=true})
 
 --############## NEOVIDE ################################
 if vim.g.neovide then
