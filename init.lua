@@ -21,7 +21,7 @@ vim.opt.splitright = true -- vertical split to the right
 vim.opt.splitbelow = true -- horitzontal split to the below
 vim.opt.termguicolors = true
 vim.opt.scrolloff = 16 -- verital scroll off
-vim.opt.sidescrolloff = 16 -- horizontal scroll off
+--vim.opt.sidescrolloff = 16 -- horizontal scroll off
 vim.opt.updatetime = 300
 vim.opt.colorcolumn = "" -- ruler column
 vim.opt.signcolumn = "no"
@@ -33,7 +33,7 @@ vim.opt.syntax = "ON"
 vim.cmd("filetype plugin on")
 
 ---------------------------- SEARCH -----------------------------------------------
-vim.opt.ignorecase = true -- enable case insensetive search
+vim.opt.ignorecase = false -- disable case insensetive search
 vim.opt.smartcase = true -- case insensetive search unless it is capitalized explicitly
 vim.opt.hlsearch = true -- disable search result highlights
 vim.opt.incsearch = true -- enable incremental search
@@ -110,6 +110,9 @@ vim.keymap.set("n", "<leader>pv", vim.cmd.Ex)
 vim.keymap.set({"n", "v"}, "<C-j>", "<C-d>zz")
 vim.keymap.set({"n", "v"}, "<C-k>", "<C-u>zz")
 
+-- go end of the file also center the screen
+vim.keymap.set({"n", "v"}, "G", "Gzz")
+
 -- in visual mode you can move the selected lines up with J, down with K
 vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv")
 vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv")
@@ -159,8 +162,9 @@ vim.keymap.set("n", "<leader>l", "<C-w>l")
 vim.keymap.set("n", "<leader>j", "<C-w>j")
 vim.keymap.set("n", "<leader>k", "<C-w>k")
 
+
 vim.keymap.set("n", "<Tab>n", ":bnext <Cr>") -- switch to next buffer
-vim.keymap.set("n", "<Tab>p", ":bnext <Cr>") -- switch to previous buffer
+vim.keymap.set("n", "<Tab>p", ":bprevious <Cr>") -- switch to previous buffer
 vim.keymap.set("n", "<Tab>d", ":bd <Cr>") -- delete the current buffer
 
 vim.keymap.set("n", "<C-l>", ":vertical resize +3<Cr>") -- expand the current split
@@ -179,7 +183,9 @@ elseif vim.fn.has("macunix") == 1 then
 end
 
 vim.opt.errorformat = {
-    "%f(%l)%\\s%\\=:\\ %m", -- MSVC
+    "%f(%l)%\\s%\\=:\\ %m", -- MSVC source code error
+    "c1: %m", -- MSVC compiler error
+    "LINK : %m", -- MSVC linker error
     "%\\%.%f:%l:%c:\\ %m", -- Clang
     "%-G%.%#" -- Ignore line
 }
@@ -234,13 +240,13 @@ set_color(0, "Special", {fg = colors.default})
 
 set_color(0, "Todo", {fg="#cc2222", bold=true, underline=true}) 
 
-vim.api.nvim_create_namespace("note")
-vim.fn.matchadd("note", "NOTE")
-set_color(0, "note", {fg="#22cc22", bold=true, underline=true})
+vim.api.nvim_create_namespace("Note")
+vim.fn.matchadd("Note", "NOTE")
+set_color(0, "Note", {fg="#22cc22", bold=true, underline=true})
 
-vim.api.nvim_create_namespace("important")
-vim.fn.matchadd("important", "IMPORTANT")
-set_color(0, "important", {fg="#cccc22", bold=true, underline=true})
+vim.api.nvim_create_namespace("Important")
+vim.fn.matchadd("Important", "IMPORTANT")
+set_color(0, "Important", {fg="#cccc22", bold=true, underline=true})
 
 --############## NEOVIDE ################################
 if vim.g.neovide then
@@ -319,5 +325,5 @@ end
 
 -- Create a floating window with default dimensions
 vim.api.nvim_create_user_command("Fterminal", toggle_terminal, {})
-vim.keymap.set({"n", "t"}, "<leader>t", toggle_terminal)
+vim.keymap.set({"n", "t"}, "<C-t>", toggle_terminal)
 
