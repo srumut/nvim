@@ -184,10 +184,13 @@ end
 
 vim.opt.errorformat = {
     "%f(%l)%\\s%\\=:\\ %m", -- MSVC source code error
-    "c1: %m", -- MSVC compiler error
-    "LINK : %m", -- MSVC linker error
-    "%\\%.%f:%l:%c:\\ %m", -- Clang
-    "%-G%.%#" -- Ignore line
+    "c1: %m",               -- MSVC compiler error
+    "LINK : %m",            -- MSVC linker error
+    "%\\%.%f:%l:%c:\\ %m",  -- Clang
+    "error: %m",            -- Clang compiler error
+    "clang: error: %m",     -- Clang error
+    "%f: line %l: %m",    -- build.sh script error
+    "%-G%.%#"               -- Ignore line
 }
 
 -- wrap the text inside of quickfix list
@@ -207,7 +210,7 @@ local colors = {
     statement = "#e5d34b",
     type =  "#808585",
     cursor = "#fddd34",
-    error_msg = "#963e47",
+    error_msg = "#ff3e47",
     warning_msg = "#a98049",
     preproc = "#808585",
     visual = "#393939",
@@ -237,6 +240,7 @@ set_color(0, "StorageClass", {fg = colors.type})
 set_color(0, "Structure", {fg = colors.type})
 set_color(0, "Typedef", {fg = colors.type})
 set_color(0, "Special", {fg = colors.default})
+set_color(0, "QuickFixLine", {fg = colors.error_msg})
 
 set_color(0, "Todo", {fg="#cc2222", bold=true, underline=true}) 
 
@@ -252,13 +256,13 @@ set_color(0, "Important", {fg="#cccc22", bold=true, underline=true})
 if vim.g.neovide then
     vim.o.guifont = "Liberation Mono:h10"
 
-    vim.g.neovide_position_animation_length = 0
-    vim.g.neovide_cursor_animation_length = 0.00
-    vim.g.neovide_cursor_trail_size = 0
-    vim.g.neovide_cursor_animate_in_insert_mode = false
-    vim.g.neovide_cursor_animate_command_line = false
-    vim.g.neovide_scroll_animation_far_lines = 0
-    vim.g.neovide_scroll_animation_length = 0.00
+    --vim.g.neovide_position_animation_length = 0
+    --vim.g.neovide_cursor_animation_length = 0.00
+    --vim.g.neovide_cursor_trail_size = 0
+    --vim.g.neovide_cursor_animate_in_insert_mode = false
+    --vim.g.neovide_cursor_animate_command_line = false
+    --vim.g.neovide_scroll_animation_far_lines = 0
+    --vim.g.neovide_scroll_animation_length = 0.00
 
     vim.keymap.set("n", "<F11>", function()
         vim.g.neovide_fullscreen = not vim.g.neovide_fullscreen
