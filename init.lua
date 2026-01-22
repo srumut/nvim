@@ -5,7 +5,7 @@ vim.opt.compatible = false -- turn off vi compatibility
 vim.opt.backup = false -- disable backup
 vim.opt.swapfile = false
 vim.opt.number = true -- enable line numbers
-vim.opt.relativenumber = true -- enable relative line numbers
+vim.opt.relativenumber = false -- disable relative line numbers
 vim.opt.wrap = false -- disable text wrapping
 vim.opt.title = false -- turn of the title
 vim.opt.mouse = "a" -- enable mouse on all modes
@@ -101,6 +101,12 @@ vim.g.netrw_liststyle = 3 -- tree view
 
 --------------------------------------------------------------------------
 
+
+---------------------------- UTILITIES -----------------------------------
+local function exists(path)
+  return vim.loop.fs_stat(path) ~= nil
+end
+
 ---------------------------- REMAPS -----------------------------------
 -- in normal mode leader+P+V key combination runs the command Ex
 -- basically opens up the Explorer
@@ -124,6 +130,27 @@ vim.keymap.set("n", "J", "mzJ`z")
 -- keeps cursor at the center while searching
 vim.keymap.set("n", "n", "nzzzv")
 vim.keymap.set("n", "N", "Nzzzv")
+
+-- these are remaps for tag jumping Alt-g go to tag definition
+--  Alt-b go back one step on tag stack
+vim.keymap.set("n", "<A-g>", "<C-]>", { silent = true })
+vim.keymap.set("n", "<A-b>", "<C-t>", { silent = true })
+-- this (ambiguous tag jumping remap)  does not seem to be working
+--vim.keymap.set("n", "<A-a>", "<C-g-]>", { silent = true })
+-- create tags by pressing Alt+t
+vim.keymap.set("n", "<A-t>", function()
+    dir_present = exists("./src")
+    if not dir_present then
+        print("Error: src folder doesn't exist")
+        return
+    end
+    status = os.execute("ctags -R src")
+    if status == 0 then
+        print("Tags created successfuly")
+    else
+        print("Error: tags couldn't be created (shell might not be accessible, or some other reason)")
+    end
+end)
 
 -- when you yank some_code and want to past it inplace of another_code_piece
 -- after visualizing another_code_pice instead of pressing just p if you press 
@@ -175,6 +202,141 @@ vim.keymap.set("n", "<C-x>", ":cclose<Cr>") -- make/build and open quickfix
 vim.keymap.set("n", "<C-n>", ":cnext<CR>") -- jump to next quickfix list item
 vim.keymap.set("n", "<C-p>", ":cprev<CR>") -- jump to previous quickfix list item
 
+-- TODO(umut): redundant?
+vim.keymap.set("n", "<C-a>", function() print(vim.api.nvim_tabpage_list_wins(0)) end)
+
+
+local ensure_two_slits_group = vim.api.nvim_create_augroup("EnsureTwoVerticalSplits", { clear = true })
+local function ensure_two_splits()
+    -- only create splits if there's only one window
+    if #vim.api.nvim_tabpage_list_wins(0) == 1 then
+        vim.cmd("vsplit")
+    end
+end
+-- Automatically create 2 horizontal splits in new tabs
+vim.api.nvim_create_autocmd("TabNewEntered", {
+    group = ensure_two_slits_group,
+    callback = ensure_two_splits,
+})
+-- Automatically create 2 horizontal splits in new tabs
+vim.api.nvim_create_autocmd("VimEnter", {
+    group = ensure_two_slits_group,
+    callback = ensure_two_splits,
+})
+
+-- open buffer in other split
+local function open_in_other_split(bufnr)
+    -- Get all windows in current tab
+    local wins = vim.api.nvim_tabpage_list_wins(0)
+    if #wins < 2 then
+        print("Need at least two splits")
+        return
+    end
+
+    local current = vim.api.nvim_get_current_win()
+    local target_win
+
+    -- Find the other window
+    for _, w in ipairs(wins) do
+        if w ~= current then
+            target_win = w
+            break
+        end
+    end
+
+    if not target_win then
+        print("No other window found")
+        return
+    end
+
+    -- Set the buffer in the other window
+    vim.api.nvim_win_set_buf(target_win, bufnr)
+    -- Optional: move cursor there
+    vim.api.nvim_set_current_win(target_win)
+end
+
+local function get_pair_targets()
+    local path = vim.api.nvim_buf_get_name(0)
+    if path == "" then return end
+
+    local ext = path:match("^.+(%..+)$")
+    local base = path:match("(.+)%..+$")
+    if not ext or not base then return end
+
+    -- Table of alternate extensions
+    local targets = {}
+
+    if ext == ".c" or ext == ".m" then
+        table.insert(targets, base .. ".h")
+    elseif ext == ".cpp" or ext == ".cc" or ext == ".mm" then
+        table.insert(targets, base .. ".h")
+        table.insert(targets, base .. ".hpp")
+    elseif ext == ".h" then
+        -- header → try sources in C/C++/ObjC/ObjC++
+        table.insert(targets, base .. ".cpp")
+        table.insert(targets, base .. ".cc")
+        table.insert(targets, base .. ".c")
+        table.insert(targets, base .. ".m")
+        table.insert(targets, base .. ".mm")
+    elseif ext == ".hpp" then
+        table.insert(targets, base .. ".cpp")
+        table.insert(targets, base .. ".cc")
+        table.insert(targets, base .. ".mm")
+    else
+        print("Not a recognized source/header file")
+        return
+    end
+
+    return targets
+end
+
+-- Toggle between source/header for C/C++/Objective-C/Objective-C++
+vim.keymap.set("n", "<C-c>", function()
+    targets = get_pair_targets()
+    for _, f in ipairs(targets) do
+        if vim.fn.filereadable(f) == 1 then
+            vim.cmd("edit " .. f)
+            return
+        end
+    end
+    print("No matching file found")
+end)
+
+-- Open corresponding source/header file in the other split
+vim.keymap.set("n", "<C-S-c>", function()
+    targets = get_pair_targets()
+    for _, f in ipairs(targets) do
+        if vim.fn.filereadable(f) == 1 then
+            local bufnr = vim.fn.bufadd(f)
+            vim.fn.bufload(bufnr)
+            open_in_other_split(bufnr)
+            return
+        end
+    end
+    print("No matching file found")
+end)
+
+
+local header_group = vim.api.nvim_create_augroup("CppHeaderGuards", { clear = true })
+vim.api.nvim_create_autocmd("BufNewFile", {
+    group = header_group,
+    pattern = { "*.h", "*.hpp" },
+    callback = function()
+        local name = vim.fn.expand("%:t:r"):upper()
+        local guard = name:gsub("%W", "_") .. "_" .. vim.fn.expand("%:e"):upper()
+
+        vim.fn.append(0, {"#if !defined(" .. guard .. ")"})
+        vim.fn.append(1, {""})
+        vim.fn.append(2, {""})
+        vim.fn.append(3, {""})
+        vim.fn.append(4, {""})
+        vim.fn.append(5, {""})
+        vim.fn.append(6, {"#define " .. guard})
+        vim.fn.append(7, {"#endif"})
+        vim.cmd("normal! 4G")
+    end,
+})
+
 -- IMPORTANT(umut): in order this to work you need command 'tee' on your PATH
 if vim.fn.has("win32") == 1 then
     vim.opt.makeprg = ".\\shell.bat && .\\build.bat"
@@ -195,10 +357,10 @@ vim.opt.errorformat = {
 
 -- wrap the text inside of quickfix list
 vim.api.nvim_create_autocmd("FileType", {
-  pattern = "qf",
-  callback = function()
-    vim.opt_local.wrap = true
-  end,
+    pattern = "qf",
+    callback = function()
+        vim.opt_local.wrap = true
+    end,
 })
 
 --- COLORSCHEME ---
