@@ -1,3 +1,63 @@
+-- treesitter parse directory path relative to the this files directory
+local treesitter_parser_dir = vim.fn.stdpath('data') .. '/treesitter_parsers'
+-- add ts parser directory to the neovim runtime path
+vim.opt.rtp:append(treesitter_parser_dir)
+
+local treesitter_languages = {"c", "cpp", "lua", "python", "go", "html"}
+local ok, ts_configs = pcall(require, "nvim-treesitter.configs")
+if ok then
+    ts_configs.setup({
+        install_dir = treesitter_parser_dir,
+        ensure_installed = treesitter_languages,
+        highlight = { enable = true },
+    })
+end
+vim.api.nvim_create_autocmd('FileType', {
+  pattern = treesitter_languages,
+  callback = function() vim.treesitter.start() end,
+})
+
+-- TODO(umut): maybe comment this on machines that I dont use 
+vim.g.go_auto_update_tools = 0
+
+--vim.o.background = "dark"
+--vim.cmd([[colorscheme gruvbox]])
+
+--vim.cmd([[colorscheme kanagawa-dragon]])
+
+--vim.cmd([[colorscheme nightfox]])
+vim.o.background = "dark"
+vim.cmd([[colorscheme gruvbox-material]])
+
+
+-- if the path passed to neovim is a directory make that directory neovims root (run neovim
+-- inside that directory, if given is a file than make root that file's parent directory
+vim.api.nvim_create_autocmd("VimEnter", {
+  callback = function()
+    local arg = vim.fn.argv(0)
+    if arg == "" then
+      return
+    end
+
+    -- make absolute path
+    local full = vim.fn.fnamemodify(arg, ":p")
+    local stat = vim.loop.fs_stat(full)
+
+    local root
+
+    if stat and stat.type == "directory" then
+      -- argument is existing directory
+      root = full
+      vim.cmd("lcd " .. vim.fn.fnameescape(root))
+
+    else
+      -- file OR non-existing file
+      root = vim.fn.fnamemodify(full, ":h")
+      vim.cmd("lcd " .. vim.fn.fnameescape(root))
+    end
+  end,
+})
+
 vim.g.mapleader = " "
 vim.g.maplocalleader = "\\"
 vim.opt.cursorline = true
@@ -25,6 +85,7 @@ vim.opt.scrolloff = 16 -- verital scroll off
 vim.opt.updatetime = 300
 vim.opt.colorcolumn = "" -- ruler column
 vim.opt.signcolumn = "no"
+vim.o.guifont = "Liberation Mono:h10"
 
 -- Idk what does this do, had it in the previous init.lua
 --vim.opt.isfname:append("@-@")
@@ -107,6 +168,33 @@ local function exists(path)
   return vim.loop.fs_stat(path) ~= nil
 end
 
+-- TODO(umut): improve and use
+local function replace()
+    local old_word = vim.fn.input("replace: ")
+    if old_word == "" then
+        print("word can't be empty")
+        return
+    end
+    local new_word = vim.fn.input("with: ")
+    if new_word ~= old_word then
+        local cmd_str = ":"
+        if vim.api.nvim_get_mode()["mode"] == "v" then
+            cmd_str = ":'<,'>"
+        end
+        cmd_str = cmd_str .. "s/" .. old_word .. "/" .. new_word .. "/g"
+        vim.cmd(cmd_str)
+    end
+end
+
+-- TODO(umut): this is probably should not be in this section
+-- this auto commands ensure splits are evenly distributed when window resizes
+vim.api.nvim_create_autocmd("VimResized", {
+  callback = function()
+    -- your logic here, e.g. equalize split sizes
+    vim.cmd("wincmd =")
+  end
+})
+
 ---------------------------- REMAPS -----------------------------------
 -- in normal mode leader+P+V key combination runs the command Ex
 -- basically opens up the Explorer
@@ -131,9 +219,47 @@ vim.keymap.set("n", "J", "mzJ`z")
 vim.keymap.set("n", "n", "nzzzv")
 vim.keymap.set("n", "N", "Nzzzv")
 
+-- a function to open the definition of the tag in the other window
+local function tag_in_other_window()
+    local tag = vim.fn.expand("<cword>")
+    if tag == "" then
+        print("No tag under cursor")
+        return
+    end
+
+    local wins = vim.api.nvim_tabpage_list_wins(0)
+    if #wins < 2 then
+        print("Need two splits")
+        return
+    end
+
+    local current = vim.api.nvim_get_current_win()
+    local target
+    for _, w in ipairs(wins) do
+        if w ~= current then
+            target = w
+            break
+        end
+    end
+    if not target then return end
+
+    -- Escape single quotes for a single-quoted Vimscript string used in execute()
+    local tag_escaped = tag:gsub("'", "''")
+    print(tag_escaped)
+
+    vim.api.nvim_win_call(target, function()
+        -- use execute so tags that contain spaces are handled as a single argument
+        vim.cmd(('tag %s'):format(tag_escaped))
+    end)
+
+    vim.api.nvim_set_current_win(target)
+end
+
+
 -- these are remaps for tag jumping Alt-g go to tag definition
 --  Alt-b go back one step on tag stack
 vim.keymap.set("n", "<A-g>", "<C-]>", { silent = true })
+vim.keymap.set("n", "<A-w>", tag_in_other_window, { silent = true })
 vim.keymap.set("n", "<A-b>", "<C-t>", { silent = true })
 -- this (ambiguous tag jumping remap)  does not seem to be working
 --vim.keymap.set("n", "<A-a>", "<C-g-]>", { silent = true })
@@ -364,6 +490,24 @@ vim.api.nvim_create_autocmd("FileType", {
 })
 
 --- COLORSCHEME ---
+local set_color = vim.api.nvim_set_hl
+
+-- this does not work with my current colorscheme (probably can make it work, by colorscheme config but I won't)
+-- set_color(0, "Todo", {fg="#cc2222", bold=true, underline=true}) 
+
+vim.api.nvim_create_namespace("Todo")
+vim.fn.matchadd("Todo", "TODO")
+set_color(0, "Todo", {fg="#ff2222", bold=true, underline=true})
+
+vim.api.nvim_create_namespace("Note")
+vim.fn.matchadd("Note", "NOTE")
+set_color(0, "Note", {fg="#22cc22", bold=true, underline=true})
+
+vim.api.nvim_create_namespace("Important")
+vim.fn.matchadd("Important", "IMPORTANT")
+set_color(0, "Important", {fg="#cccc22", bold=true, underline=true})
+
+--[[
 local colors = {
     background = "#191919",
     default = "#dcdddc",
@@ -381,7 +525,6 @@ local colors = {
 
 vim.opt.guicursor = "n-v-c:block-Cursor,i-ci:ver25-Cursor" -- so that cursor color works properly
 
-local set_color = vim.api.nvim_set_hl
 set_color(0, "Normal", {bg = colors.background, fg = colors.default})
 set_color(0, "Visual", {bg = colors.visual})
 set_color(0, "Comment", {fg = colors.comment})
@@ -404,19 +547,11 @@ set_color(0, "Typedef", {fg = colors.type})
 set_color(0, "Special", {fg = colors.default})
 set_color(0, "QuickFixLine", {fg = colors.error_msg})
 
-set_color(0, "Todo", {fg="#cc2222", bold=true, underline=true}) 
-
-vim.api.nvim_create_namespace("Note")
-vim.fn.matchadd("Note", "NOTE")
-set_color(0, "Note", {fg="#22cc22", bold=true, underline=true})
-
-vim.api.nvim_create_namespace("Important")
-vim.fn.matchadd("Important", "IMPORTANT")
-set_color(0, "Important", {fg="#cccc22", bold=true, underline=true})
+]]--
 
 --############## NEOVIDE ################################
 if vim.g.neovide then
-    vim.o.guifont = "Liberation Mono:h10"
+    -- vim.o.guifont = "Liberation Mono:h10"
 
     --vim.g.neovide_position_animation_length = 0
     --vim.g.neovide_cursor_animation_length = 0.00
@@ -425,6 +560,8 @@ if vim.g.neovide then
     --vim.g.neovide_cursor_animate_command_line = false
     --vim.g.neovide_scroll_animation_far_lines = 0
     --vim.g.neovide_scroll_animation_length = 0.00
+
+    vim.g.neovide_hide_mouse_when_typing = true
 
     vim.keymap.set("n", "<F11>", function()
         vim.g.neovide_fullscreen = not vim.g.neovide_fullscreen
