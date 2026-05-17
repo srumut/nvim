@@ -85,7 +85,12 @@ vim.opt.scrolloff = 16 -- verital scroll off
 vim.opt.updatetime = 300
 vim.opt.colorcolumn = "" -- ruler column
 vim.opt.signcolumn = "no"
-vim.o.guifont = "Liberation Mono:h10"
+local os = vim.loop.os_uname().sysname
+if os == "Darwin" then
+    vim.o.guifont = "Liberation Mono:h12"
+else
+    vim.o.guifont = "Liberation Mono:h10"
+end
 
 -- Idk what does this do, had it in the previous init.lua
 --vim.opt.isfname:append("@-@")
