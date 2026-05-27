@@ -87,7 +87,7 @@ vim.opt.colorcolumn = "" -- ruler column
 vim.opt.signcolumn = "no"
 local os = vim.loop.os_uname().sysname
 if os == "Darwin" then
-    vim.o.guifont = "Liberation Mono:h12"
+    vim.o.guifont = "Liberation Mono:h13"
 else
     vim.o.guifont = "Liberation Mono:h10"
 end
@@ -260,6 +260,10 @@ local function tag_in_other_window()
     vim.api.nvim_set_current_win(target)
 end
 
+-- treat option (on macos) as a meta key so the remaps a few lines down below works
+if vim.g.neovide then
+    vim.g.neovide_input_macos_option_key_is_meta = "both"
+end
 
 -- these are remaps for tag jumping Alt-g go to tag definition
 --  Alt-b go back one step on tag stack
