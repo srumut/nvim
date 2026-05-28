@@ -123,6 +123,15 @@ vim.cmd("set wildmenu")
 -- it will open the tcp_client.c without event to TAB complete it (which you can do any time), but this wont work if there are more than one buffer
 -- that have the substring "tcp" in that case you either need a more specific substring or just use TAB complete
 
+------------------------- DYNAMIC FONT RESIZING ON NEOVIDE ---------------------------------------
+local function neovideScale(amount)
+  vim.g.neovide_scale_factor = vim.g.neovide_scale_factor + amount
+end
+
+vim.keymap.set('n', '<C-+>', function() neovideScale(0.1) end)
+vim.keymap.set('n', '<C-->', function() neovideScale(-0.1) end)
+vim.keymap.set('n', '<C-0>', function() vim.g.neovide_scale_factor = 1 end)
+
 ------------------------- TAG JUMPING ---------------------------------------
 -- Create the "tags" files (you may need to install ctags first)
 vim.cmd("command! Maketags !ctags -R .")
