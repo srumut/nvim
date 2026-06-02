@@ -269,16 +269,18 @@ local function tag_in_other_window()
     vim.api.nvim_set_current_win(target)
 end
 
--- treat option (on macos) as a meta key so the remaps a few lines down below works
-if vim.g.neovide then
-    vim.g.neovide_input_macos_option_key_is_meta = "both"
+
+-- tag jumping remaps
+if os == "Darwin" then
+    vim.keymap.set("n", "<D-g>", "<C-]>", { silent = true })
+    vim.keymap.set("n", "<D-w>", tag_in_other_window, { silent = true })
+    vim.keymap.set("n", "<D-b>", "<C-t>", { silent = true })
+else
+    vim.keymap.set("n", "<A-g>", "<C-]>", { silent = true })
+    vim.keymap.set("n", "<A-w>", tag_in_other_window, { silent = true })
+    vim.keymap.set("n", "<A-b>", "<C-t>", { silent = true })
 end
 
--- these are remaps for tag jumping Alt-g go to tag definition
---  Alt-b go back one step on tag stack
-vim.keymap.set("n", "<A-g>", "<C-]>", { silent = true })
-vim.keymap.set("n", "<A-w>", tag_in_other_window, { silent = true })
-vim.keymap.set("n", "<A-b>", "<C-t>", { silent = true })
 -- this (ambiguous tag jumping remap)  does not seem to be working
 --vim.keymap.set("n", "<A-a>", "<C-g-]>", { silent = true })
 -- create tags by pressing Alt+t
