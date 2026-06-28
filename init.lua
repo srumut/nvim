@@ -17,6 +17,25 @@ vim.api.nvim_create_autocmd('FileType', {
   callback = function() vim.treesitter.start() end,
 })
 
+
+require("blink.cmp").setup({
+    fuzzy = {
+        implementation = "lua",
+    },
+    keymap = {
+        preset = "default",
+    },
+
+    sources = {
+        default = { "lsp", "path", "buffer" },
+    },
+
+    completion = {
+        documentation = {
+            auto_show = true,
+        },
+    },
+})
 -- TODO(umut): maybe comment this on machines that I dont use 
 vim.g.go_auto_update_tools = 0
 
@@ -29,6 +48,33 @@ vim.g.go_auto_update_tools = 0
 vim.o.background = "dark"
 vim.cmd([[colorscheme gruvbox-material]])
 
+
+vim.lsp.config('basedpyright', {
+    cmd = { 'basedpyright-langserver', '--stdio' },
+    filetypes = { 'python' },
+    root_markers = {
+        'pyproject.toml',
+        'setup.py',
+        '.git',
+    },
+})
+
+vim.lsp.enable("basedpyright")
+vim.keymap.set("n", "gd", vim.lsp.buf.definition)
+vim.keymap.set("n", "gr", vim.lsp.buf.references)
+vim.keymap.set("n", "K", vim.lsp.buf.hover)
+vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename)
+vim.keymap.set("n", "<leader>ca", vim.lsp.buf.code_action)
+vim.diagnostic.config({
+    virtual_text = false,
+    underline = false,
+    signs = true,
+    update_in_insert = false,
+})
+vim.keymap.set("n", "[d", vim.diagnostic.goto_prev)
+vim.keymap.set("n", "]d", vim.diagnostic.goto_next)
+vim.keymap.set("n", "<leader>d", vim.diagnostic.open_float)
+vim.keymap.set("n", "<leader>ws", vim.lsp.buf.workspace_symbol)
 
 -- if the path passed to neovim is a directory make that directory neovims root (run neovim
 -- inside that directory, if given is a file than make root that file's parent directory
@@ -166,7 +212,7 @@ vim.opt.completeopt = {"fuzzy", "noselect", "menuone"}
 vim.g.netrw_banner = 1 -- disable the banner
 vim.g.netrw_browser_split = 4 -- open in prior window
 vim.g.netrw_altv = 1 -- open splits to the right
-vim.g.netrw_liststyle = 3 -- tree view
+vim.g.netrw_liststyle = 0 -- tree view
 
 -- NOW 
 -- :edit or :Ex a folder to open a file browser
@@ -628,6 +674,7 @@ local function create_floating_window(opts)
 
     -- Create the floating window
     local win = vim.api.nvim_open_win(buf, true, win_config)
+    vim.wo[win].winhighlight = "NormalFloat:Normal,FloatBorder:FloatBorder"
 
     return { buf = buf, win = win }
 end
