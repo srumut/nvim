@@ -166,7 +166,7 @@ vim.opt.completeopt = {"fuzzy", "noselect", "menuone"}
 vim.g.netrw_banner = 1 -- disable the banner
 vim.g.netrw_browser_split = 4 -- open in prior window
 vim.g.netrw_altv = 1 -- open splits to the right
-vim.g.netrw_liststyle = 3 -- tree view
+vim.g.netrw_liststyle = 1 -- tree view
 
 -- NOW 
 -- :edit or :Ex a folder to open a file browser
@@ -233,6 +233,20 @@ vim.keymap.set("n", "J", "mzJ`z")
 vim.keymap.set("n", "n", "nzzzv")
 vim.keymap.set("n", "N", "Nzzzv")
 
+vim.keymap.set("n", "<C-1>", "1gt")
+vim.keymap.set("n", "<C-2>", "2gt")
+vim.keymap.set("n", "<C-3>", "3gt")
+vim.keymap.set("n", "<C-4>", "4gt")
+vim.keymap.set("n", "<C-5>", "5gt")
+vim.keymap.set("n", "<C-6>", "6gt")
+vim.keymap.set("n", "<C-7>", "7gt")
+vim.keymap.set("n", "<C-8>", "8gt")
+vim.keymap.set("n", "<C-8>", "8gt")
+vim.keymap.set("n", "<C-8>", "8gt")
+vim.keymap.set("n", "<C-9>", ":tablast<CR>")
+vim.keymap.set("n", "<leader>w", "<Cmd>tabclose<CR>")
+vim.keymap.set("n", "<leader>t", ":tabnew<CR>")
+
 -- a function to open the definition of the tag in the other window
 local function tag_in_other_window()
     local tag = vim.fn.expand("<cword>")
@@ -288,8 +302,8 @@ vim.keymap.set("n", "<A-t>", function()
         print("Error: src folder doesn't exist")
         return
     end
-    status = os.execute("ctags -R src")
-    if status == 0 then
+    vim.fn.system("ctags -R src")
+    if vim.v.shell_error == 0 then
         print("Tags created successfuly")
     else
         print("Error: tags couldn't be created (shell might not be accessible, or some other reason)")
@@ -483,7 +497,7 @@ vim.api.nvim_create_autocmd("BufNewFile", {
 
 -- IMPORTANT(umut): in order this to work you need command 'tee' on your PATH
 if vim.fn.has("win32") == 1 then
-    vim.opt.makeprg = ".\\shell.bat && .\\build.bat"
+    vim.opt.makeprg =  ".\\build.bat" -- ".\\shell.bat && .\\build.bat"
 elseif vim.fn.has("macunix") == 1 then
     vim.opt.makeprg = "./build.sh"
 end
