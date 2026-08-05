@@ -358,6 +358,9 @@ local function tag_to_qf()
     vim.cmd("cc")
 end
 
+-- IMPORTANT TODO (umut): jump stack seems to be not preserved when I jump so
+-- you should fix that, CTRL+b should work when I want to go back in the jump stack
+
 -- this functions favors implementations over prototypes for single tag jump
 local function goto_definition()
     local word = vim.fn.expand("<cword>")
