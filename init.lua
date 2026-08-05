@@ -92,6 +92,9 @@ else
     vim.o.guifont = "Liberation Mono:h10"
 end
 
+if vim.fn.has("win32") == 1 then
+    vim.opt.tags = "./tags,tags," .. vim.fn.expand("~/tags/windows.tags")
+end
 -- Idk what does this do, had it in the previous init.lua
 --vim.opt.isfname:append("@-@")
 
@@ -249,38 +252,134 @@ vim.keymap.set("n", "<leader>t", ":tabnew<CR>")
 
 -- a function to open the definition of the tag in the other window
 local function tag_in_other_window()
-    local tag = vim.fn.expand("<cword>")
-    if tag == "" then
-        print("No tag under cursor")
+    local word = vim.fn.expand("<cword>")
+    if word == "" then
+        vim.notify("No tag under cursor", vim.log.levels.WARN)
         return
     end
 
     local wins = vim.api.nvim_tabpage_list_wins(0)
     if #wins < 2 then
-        print("Need two splits")
+        vim.notify("Need two splits", vim.log.levels.WARN)
         return
     end
 
     local current = vim.api.nvim_get_current_win()
     local target
-    for _, w in ipairs(wins) do
-        if w ~= current then
-            target = w
+
+    for _, win in ipairs(wins) do
+        if win ~= current then
+            target = win
             break
         end
     end
-    if not target then return end
 
-    -- Escape single quotes for a single-quoted Vimscript string used in execute()
-    local tag_escaped = tag:gsub("'", "''")
-    print(tag_escaped)
+    local tags = vim.fn.taglist("^" .. vim.pesc(word) .. "$")
+    if vim.tbl_isempty(tags) then
+        vim.notify("No tags found", vim.log.levels.WARN)
+        return
+    end
+
+    -- Prefer implementations over prototypes.
+    table.sort(tags, function(a, b)
+        if a.kind == "p" and b.kind ~= "p" then
+            return false
+        elseif a.kind ~= "p" and b.kind == "p" then
+            return true
+        end
+        return false
+    end)
+
+    local tag = tags[1]
 
     vim.api.nvim_win_call(target, function()
-        -- use execute so tags that contain spaces are handled as a single argument
-        vim.cmd(('tag %s'):format(tag_escaped))
+        vim.cmd.edit(vim.fn.fnameescape(tag.filename))
+
+        if tag.line then
+            vim.fn.cursor(tonumber(tag.line), 1)
+        else
+            local pat = tag.cmd
+                :gsub("^/", "")
+                :gsub('/;"$', "")
+                :gsub("\\/", "/")
+
+            vim.fn.search(pat, "cw")
+        end
     end)
 
     vim.api.nvim_set_current_win(target)
+end
+
+-- this function makes use of quickfix ui for jump to multiple tags
+local function tag_to_qf()
+    local word = vim.fn.expand("<cword>")
+    local tags = vim.fn.taglist("^" .. vim.pesc(word) .. "$")
+
+    if vim.tbl_isempty(tags) then
+        vim.notify("No tags found", vim.log.levels.WARN)
+        return
+    end
+
+    table.sort(tags, function(a, b)
+        -- Prefer declarations over definitions.
+        if a.kind ~= b.kind then
+            if a.kind == "p" then return true end
+            if b.kind == "p" then return false end
+        end
+
+        -- Then sort by filename.
+        return a.filename < b.filename
+    end)
+
+    local items = {}
+
+    for _, tag in ipairs(tags) do
+        table.insert(items, {
+            filename = tag.filename,
+            lnum = tonumber(tag.line) or 1,
+            col = 1,
+            text = string.format(
+                "[%s] %s (%s)",
+                tag.kind,
+                tag.name,
+                vim.fn.fnamemodify(tag.filename, ":.")
+            ),
+        })
+    end
+
+    vim.fn.setqflist({}, "r", {
+        title = "Tags: " .. word,
+        items = items,
+    })
+
+    vim.cmd("copen")
+
+    -- Put the cursor on the first result.
+    vim.cmd("cc")
+end
+
+-- this functions favors implementations over prototypes for single tag jump
+local function goto_definition()
+    local word = vim.fn.expand("<cword>")
+    local tags = vim.fn.taglist("^" .. vim.pesc(word) .. "$")
+
+    if vim.tbl_isempty(tags) then
+        vim.notify("No tags found", vim.log.levels.WARN)
+        return
+    end
+
+    local best = tags[1]
+
+    -- If there is any non-prototype, prefer it.
+    for _, tag in ipairs(tags) do
+        if tag.kind ~= "p" then
+            best = tag
+            break
+        end
+    end
+
+    vim.cmd.edit(best.filename)
+    vim.fn.cursor(tonumber(best.line) or 1, 1)
 end
 
 
@@ -290,9 +389,10 @@ if os == "Darwin" then
     vim.keymap.set("n", "<D-w>", tag_in_other_window, { silent = true })
     vim.keymap.set("n", "<D-b>", "<C-t>", { silent = true })
 else
-    vim.keymap.set("n", "<A-g>", "<C-]>", { silent = true })
-    vim.keymap.set("n", "<A-w>", tag_in_other_window, { silent = true })
-    vim.keymap.set("n", "<A-b>", "<C-t>", { silent = true })
+    vim.keymap.set("n", "<C-g>", goto_definition, { silent = true })
+    vim.keymap.set("n", "<C-S-g>", tag_in_other_window, { silent = true })
+    vim.keymap.set("n", "<C-b>", "<C-t>", { silent = true })
+    vim.keymap.set("n", "<C-a>", tag_to_qf, { silent = true })
 end
 
 -- this (ambiguous tag jumping remap)  does not seem to be working
@@ -304,7 +404,7 @@ vim.keymap.set("n", "<A-t>", function()
         print("Error: src folder doesn't exist")
         return
     end
-    vim.fn.system("ctags -R src")
+    vim.fn.system("ctags -R --fields=+n --c++-kinds=+p --c-kinds=+p src")
     if vim.v.shell_error == 0 then
         print("Tags created successfuly")
     else
@@ -361,9 +461,6 @@ vim.keymap.set("n", "<C-m>", ":make<CR><CR>:copen<CR>") -- make/build and open q
 vim.keymap.set("n", "<C-x>", ":cclose<Cr>") -- make/build and open quickfix
 vim.keymap.set("n", "<C-n>", ":cnext<CR>") -- jump to next quickfix list item
 vim.keymap.set("n", "<C-p>", ":cprev<CR>") -- jump to previous quickfix list item
-
--- TODO(umut): redundant?
-vim.keymap.set("n", "<C-a>", function() print(vim.api.nvim_tabpage_list_wins(0)) end)
 
 
 local ensure_two_slits_group = vim.api.nvim_create_augroup("EnsureTwoVerticalSplits", { clear = true })
