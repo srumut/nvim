@@ -3,7 +3,7 @@ local treesitter_parser_dir = vim.fn.stdpath('data') .. '/treesitter_parsers'
 -- add ts parser directory to the neovim runtime path
 vim.opt.rtp:append(treesitter_parser_dir)
 
-local treesitter_languages = {"c", "cpp", "lua", "python", "go", "html"}
+local treesitter_languages = {"c", "cpp", "lua", "python", "go", "html", "hlsl", "templ"}
 local ok, ts_configs = pcall(require, "nvim-treesitter.configs")
 if ok then
     ts_configs.setup({
@@ -17,6 +17,15 @@ vim.api.nvim_create_autocmd('FileType', {
   callback = function() vim.treesitter.start() end,
 })
 
+vim.filetype.add({
+    extension = {
+        hlsl = "hlsl",
+        hlsli = "hlsl",
+        fx = "hlsl",
+        fxh = "hlsl",
+        templ = "templ",
+    },
+})
 -- TODO(umut): maybe comment this on machines that I dont use 
 vim.g.go_auto_update_tools = 0
 
@@ -29,6 +38,26 @@ vim.g.go_auto_update_tools = 0
 vim.o.background = "dark"
 vim.cmd([[colorscheme gruvbox-material]])
 
+
+-- fff
+
+require("fff").setup()
+
+vim.opt.path:append("**")
+vim.cmd("set wildmenu")
+
+vim.keymap.set("n", "<leader>ff", function()
+    require("fff").find_files()
+end, { desc = "FFF: Find files" })
+
+vim.keymap.set("n", "<leader>fg", function()
+    require("fff").live_grep()
+end, { desc = "FFF: Live grep" })
+
+vim.keymap.set({"n", "x"}, "<leader>fw", function()
+    require("fff").live_grep_under_cursor()
+end, { desc = "FFF: Grep word/selection" })
+-- ----------------------
 
 -- if the path passed to neovim is a directory make that directory neovims root (run neovim
 -- inside that directory, if given is a file than make root that file's parent directory
@@ -93,7 +122,11 @@ else
 end
 
 if vim.fn.has("win32") == 1 then
-    vim.opt.tags = "./tags,tags," .. vim.fn.expand("~/tags/windows.tags")
+    vim.opt.tags = table.concat({
+        "tags",
+        vim.fn.expand("~/tags/windows.tags"),
+        vim.fn.expand("~/tags/windows_preprocessed.tags"),
+    }, ",")
 end
 -- Idk what does this do, had it in the previous init.lua
 --vim.opt.isfname:append("@-@")
