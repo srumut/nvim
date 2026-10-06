@@ -1,3 +1,31 @@
+vim.g.mapleader = " "
+vim.g.maplocalleader = "\\"
+vim.opt.cursorline = true
+vim.opt.compatible = false -- turn off vi compatibility
+vim.opt.backup = false -- disable backup
+vim.opt.swapfile = false
+vim.opt.number = true -- enable line numbers
+vim.opt.relativenumber = false -- disable relative line numbers
+vim.opt.wrap = false -- disable text wrapping
+vim.opt.title = false -- turn of the title
+vim.opt.mouse = "a" -- enable mouse on all modes
+vim.opt.tabstop = 4 -- tabs are 4 spaces
+vim.opt.softtabstop = 4
+vim.opt.shiftwidth = 4
+--vim.opt.fileencoding = "utf-8" -- TODO(umut): should I enable this ?
+vim.opt.showtabline = 1 -- show tabs only if there are more than one
+vim.opt.laststatus = 2 -- always show status line
+vim.opt.expandtab = true
+vim.opt.smartindent = true
+vim.opt.splitright = true -- vertical split to the right
+vim.opt.splitbelow = true -- horitzontal split to the below
+vim.opt.termguicolors = true
+vim.opt.scrolloff = 16 -- verital scroll off
+--vim.opt.sidescrolloff = 16 -- horizontal scroll off
+vim.opt.updatetime = 300
+vim.opt.colorcolumn = "" -- ruler column
+vim.opt.signcolumn = "no"
+
 -- treesitter parse directory path relative to the this files directory
 local treesitter_parser_dir = vim.fn.stdpath('data') .. '/treesitter_parsers'
 -- add ts parser directory to the neovim runtime path
@@ -41,7 +69,13 @@ vim.cmd([[colorscheme gruvbox-material]])
 
 -- fff
 
-require("fff").setup()
+local fff = require("fff").setup({
+    select = {
+        select_window = function(_current_buf, _action)
+            return nil
+        end,
+    },
+})
 
 vim.opt.path:append("**")
 vim.cmd("set wildmenu")
@@ -87,33 +121,6 @@ vim.api.nvim_create_autocmd("VimEnter", {
   end,
 })
 
-vim.g.mapleader = " "
-vim.g.maplocalleader = "\\"
-vim.opt.cursorline = true
-vim.opt.compatible = false -- turn off vi compatibility
-vim.opt.backup = false -- disable backup
-vim.opt.swapfile = false
-vim.opt.number = true -- enable line numbers
-vim.opt.relativenumber = false -- disable relative line numbers
-vim.opt.wrap = false -- disable text wrapping
-vim.opt.title = false -- turn of the title
-vim.opt.mouse = "a" -- enable mouse on all modes
-vim.opt.tabstop = 4 -- tabs are 4 spaces
-vim.opt.softtabstop = 4
-vim.opt.shiftwidth = 4
---vim.opt.fileencoding = "utf-8" -- TODO(umut): should I enable this ?
-vim.opt.showtabline = 1 -- show tabs only if there are more than one
-vim.opt.laststatus = 2 -- always show status line
-vim.opt.expandtab = true
-vim.opt.smartindent = true
-vim.opt.splitright = true -- vertical split to the right
-vim.opt.splitbelow = true -- horitzontal split to the below
-vim.opt.termguicolors = true
-vim.opt.scrolloff = 16 -- verital scroll off
---vim.opt.sidescrolloff = 16 -- horizontal scroll off
-vim.opt.updatetime = 300
-vim.opt.colorcolumn = "" -- ruler column
-vim.opt.signcolumn = "no"
 local os = vim.loop.os_uname().sysname
 if os == "Darwin" then
     vim.o.guifont = "Liberation Mono:h13"
