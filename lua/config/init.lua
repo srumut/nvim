@@ -3,6 +3,8 @@
 -- functions (features/*, util).
 local M = {}
 
+require("config.features.align")
+
 -- A failing module must not take the rest of the config down, but it must also not fail
 -- silently (that is how the old treesitter setup hid its problem).
 local function load(name)

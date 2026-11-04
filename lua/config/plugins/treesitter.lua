@@ -15,7 +15,7 @@ local parser_dir = vim.fn.stdpath("config") .. "/treesitter_parsers"
 
 -- Parser names. They must equal the filetype name (true for all of these); for a language
 -- where they differ, add vim.treesitter.language.register(<parser>, <filetype>).
-local languages = { "c", "cpp", "lua", "python", "go", "html", "hlsl", "templ", "dart" }
+local languages = { "c", "cpp", "lua", "python", "go", "html", "hlsl", "templ", "dart", "odin" }
 
 -- 1. Highlighting -----------------------------------------------------------------------
 -- Only start when a parser exists (installed ones, or the c/lua parsers bundled with Neovim).
